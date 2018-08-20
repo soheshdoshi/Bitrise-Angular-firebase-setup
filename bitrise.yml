@@ -1,0 +1,80 @@
+---
+format_version: '5'
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+project_type: other
+trigger_map:
+- push_branch: master
+  workflow: deploy
+- push_branch: staging
+  workflow: deploy
+- push_branch: dev
+  workflow: deploy
+- pull_request_target_branch: "*"
+  workflow: primary
+workflows:
+  primary:
+    steps:
+    - activate-ssh-key:
+        run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
+    - git-clone: {}
+    - cache-pull: {}
+    - script:
+        title: primary script for only build web
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            # fail if any commands fails
+            set -e
+            # debug log
+            set -x
+            #chmod +x run.sh
+            #bash ./run.sh
+            sed -i 's|(\(.*: "\)\(.*\)"/\1\2")|("\(.*: "\)\(.*\)"/\1$BITRISE_GIT_BRANCH_\2")|g' src/environments/environment.ts
+            npm install
+            npm run build-prod
+    - sonarqube-scanner:
+        inputs:
+        - scanner_properties: "sonar.sources=src\nsonar.sourceEncoding=UTF-8\nsonar.analysis.mode=preview
+            \         \nsonar.javascript.file.suffixes=.js,.jsx\nsonar.projectKey=web\nsonar.login=49f7d3564ba45a4ce95dc08979429c86074cc821\nsonar.report.export.path=sonar-report.json\nsonar.host.url=https://sonar.teetra.com"
+    - slack:
+        inputs:
+        - channel: CBSP1BENB
+        - text: "*Yay! Build was successful!*"
+        - emoji: ":heavy_check_mark:"
+        - pretext: ''
+        - channel_on_error: CBSP1BENB
+        - text_on_error: "*Ah! Something went wrong*"
+        - emoji_on_error: ":man-frowning:"
+        - pretext_on_error: ''
+        - webhook_url: https://hooks.slack.com/services/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
+    - cache-push: {}
+  deploy:
+    steps:
+    - activate-ssh-key:
+        run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
+    - git-clone: {}
+    - cache-pull: {}
+    - script:
+        title: deploy script for deployment web
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            # fail if any commands fails
+            set -e
+            # debug log
+            set -x
+            #chmod +x run.sh
+            #bash ./run.sh
+            npm run deploy
+    - slack:
+        inputs:
+        - channel: CBSP1BENB
+        - text: "*Yay! Build was successful!*"
+        - emoji: ":heavy_check_mark:"
+        - pretext: ''
+        - channel_on_error: CBSP1BENB
+        - text_on_error: "*Ah! Something went wrong*"
+        - emoji_on_error: ":man-frowning:"
+        - pretext_on_error: ''
+        - webhook_url: https://hooks.slack.com/services/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
+    - cache-push: {}
