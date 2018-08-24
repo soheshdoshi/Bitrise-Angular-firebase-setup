@@ -1,0 +1,59 @@
+---
+format_version: '5'
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+project_type: other
+trigger_map:
+- push_branch: master
+  workflow: primary
+- push_branch: staging
+  workflow: primary
+- push_branch: dev
+  workflow: primary
+- pull_request_target_branch: "*"
+  workflow: primary
+workflows:
+  primary:
+    steps:
+    - activate-ssh-key:
+        run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
+    - git-clone: {}
+    - cache-pull: {}
+    - script:
+        title: primary workflow for deploy functions.
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            # fail if any commands fails
+            set -e
+            # debug log
+            set -x
+            cd ./functions
+            if [ "${BITRISE_GIT_BRANCH}" == master ]; then
+              sed -i "s|PROJECTID|${Master_projectId}|g" ./package.json
+            elif [ "${BITRISE_GIT_BRANCH}" == staging ]; then
+              sed -i "s|PROJECTID|${Stag_projectId}|g" ./package.json
+            else
+              sed -i "s|PROJECTID|${DEV_projectId}|g" ./package.json
+            fi
+            sed  -i "s|FIREBASE_TOKEN|${FIREBASE_TOKEN}|g" ./package.json
+            npm install
+            npm run use
+            npm run deploy
+    - sonarqube-scanner:
+        inputs:
+        - scanner_properties: "sonar.sources=functions\nsonar.sourceEncoding=UTF-8
+            \         \nsonar.javascript.file.suffixes=.js,.jsx\nsonar.projectKey=functions\nsonar.login=49f7d3564ba45a4ce95dc08979429c86074cc821\nsonar.host.url=https://sonar.teetra.com"
+    - slack:
+        inputs:
+        - channel: CBSP1BENB
+        - text: "*Yay! Build was successful!*"
+        - emoji: ":heavy_check_mark:"
+        - pretext: ''
+        - channel_on_error: CBSP1BENB
+        - text_on_error: "*Ah! Something went wrong*"
+        - emoji_on_error: ":man-frowning:"
+        - pretext_on_error: ''
+        - from_username: Web-Functions
+        - webhook_url: https://hooks.slack.com/services/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
+    - cache-push: {}
+

@@ -1,0 +1,73 @@
+---
+format_version: '5'
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+project_type: other
+trigger_map:
+- push_branch: "*"
+  workflow: primary
+- pull_request_source_branch: "*"
+  workflow: primary
+workflows:
+  primary:
+    steps:
+    - activate-ssh-key:
+        run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
+    - git-clone: {}
+    - script:
+        title: Do anything with Script step
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            # fail if any commands fails
+            set -e
+            # debug log
+            set -x
+            cd ./functions
+            if [ "${BITRISE_GIT_BRANCH}" == master ]; then
+              sed -i "s|MERCHANTID|${Master_MERCHANTID}|g" ./config.json
+              sed -i "s|PUBLICKEY|${Master_PUBLICKEY}|g" ./config.json
+              sed -i "s|PRIVATEKEY|${Master_PRIVATEKEY}|g" ./config.json
+              sed -i "s|URL|${Master_URL}|g" ./config.json
+              sed -i "s|PASS|${Master_PASS}|g" ./config.json
+              sed -i "s|USER|${Master_USER}|g" ./config.json
+              sed -i "s|SOURCE|${Master_SOURCE}|g" ./config.json
+              sed -i "s|API_KEY|${Master_API_KEY}|g" ./config.json
+              sed -i "s|DOMAIN|${Master_DOMAIN}|g" ./config.json
+              sed -i "s|KEY|${Master_KEY}|g" ./config.json
+              sed -i "s|ENVIRONMENT|${Master_ENVIRONMENT}|g" ./config.json
+              sed -i "s|SECRET|${Master_SECRET}|g" ./config.json
+              sed -i "s|PROJECTID|${Master_projectId}|g" ./package.json
+            elif [ "${BITRISE_GIT_BRANCH}" == staging ]; then
+              sed -i "s|MERCHANTID|${Stag_MERCHANTID}|g" ./config.json
+              sed -i "s|PUBLICKEY|${Stag_PUBLICKEY}|g" ./config.json
+              sed -i "s|PRIVATEKEY|${Stag_PRIVATEKEY}|g" ./config.json
+              sed -i "s|URL|${Stag_URL}|g" ./config.json
+              sed -i "s|PASS|${Stag_PASS}|g" ./config.json
+              sed -i "s|USER|${Stag_USER}|g" ./config.json
+              sed -i "s|SOURCE|${Stag_SOURCE}|g" ./config.json
+              sed -i "s|API_KEY|${Stag_API_KEY}|g" ./config.json
+              sed -i "s|DOMAIN|${Stag_DOMAIN}|g" ./config.json
+              sed -i "s|KEY|${Stag_KEY}|g" ./config.json
+              sed -i "s|ENVIRONMENT|${Stag_ENVIRONMENT}|g" ./config.json
+              sed -i "s|SECRET|${Stag_SECRET}|g" ./config.json
+              sed -i "s|PROJECTID|${Stag_projectId}|g" ./package.json
+            else
+              sed -i "s|MERCHANTID|${Dev_MERCHANTID}|g" ./config.json
+              sed -i "s|PUBLICKEY|${Dev_PUBLICKEY}|g" ./config.json
+              sed -i "s|PRIVATEKEY|${Dev_PRIVATEKEY}|g" ./config.json
+              sed -i "s|URL|${Dev_URL}|g" ./config.json
+              sed -i "s|PASS|${Dev_PASS}|g" ./config.json
+              sed -i "s|USER|${Dev_USER}|g" ./config.json
+              sed -i "s|SOURCE|${Dev_SOURCE}|g" ./config.json
+              sed -i "s|API_KEY|${Dev_API_KEY}|g" ./config.json
+              sed -i "s|DOMAIN|${Dev_DOMAIN}|g" ./config.json
+              sed -i "s|KEY|${Dev_KEY}|g" ./config.json
+              sed -i "s|ENVIRONMENT|${Dev_ENVIRONMENT}|g" ./config.json
+              sed -i "s|SECRET|${Dev_SECRET}|g" ./config.json
+              sed -i "s|PROJECTID|${Dev_projectId}|g" ./package.json
+            fi
+            sed  -i "s|FIREBASE_TOKEN|${FIREBASE_TOKEN}|g" ./package.json
+            npm install -g firebase-tools
+            npm run use
+            firebase functions:config:set configuration="$(cat ./config.json)"
+
