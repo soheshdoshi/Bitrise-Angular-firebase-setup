@@ -29,24 +29,24 @@ workflows:
             set -x
             #chmod +x run.sh
             #bash ./run.sh
-            sed -i 's|(\(.*: "\)\(.*\)"/\1\2")|("\(.*: "\)\(.*\)"/\1$BITRISE_GIT_BRANCH_\2")|g' src/environments/environment.ts
+            sed -i 's|(\(.*: "\)\(.*\)"/\1\2")|("\(.*: "\)\(.*\)"/\1$BITRISE_GIT_BRANCH_\2")|g' src/environments/environment.prod.ts
             npm install
             npm run build-prod
     - sonarqube-scanner:
         inputs:
         - scanner_properties: "sonar.sources=src\nsonar.sourceEncoding=UTF-8\nsonar.analysis.mode=preview
-            \         \nsonar.javascript.file.suffixes=.js,.jsx\nsonar.projectKey=web\nsonar.login=49f7d3564ba45a4ce95dc08979429c86074cc821\nsonar.report.export.path=sonar-report.json\nsonar.host.url=https://sonar.teetra.com"
+            \         \nsonar.javascript.file.suffixes=.js,.jsx\nsonar.projectKey=web\nsonar.login=49f7d3564ba45a4ce95dc08979429c86074cc821\nsonar.report.export.path=sonar-report.json\nsonar.host.url=YOUR_URL"
     - slack:
         inputs:
-        - channel: CBSP1BENB
+        - channel: 
         - text: "*Yay! Build was successful!*"
         - emoji: ":heavy_check_mark:"
         - pretext: ''
-        - channel_on_error: CBSP1BENB
+        - channel_on_error: 
         - text_on_error: "*Ah! Something went wrong*"
         - emoji_on_error: ":man-frowning:"
         - pretext_on_error: ''
-        - webhook_url: https://hooks.slack.com/services/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
+        - webhook_url: 
     - cache-push: {}
   deploy:
     steps:
@@ -68,13 +68,13 @@ workflows:
             npm run deploy
     - slack:
         inputs:
-        - channel: CBSP1BENB
+        - channel: 
         - text: "*Yay! Build was successful!*"
         - emoji: ":heavy_check_mark:"
         - pretext: ''
-        - channel_on_error: CBSP1BENB
+        - channel_on_error: 
         - text_on_error: "*Ah! Something went wrong*"
         - emoji_on_error: ":man-frowning:"
         - pretext_on_error: ''
-        - webhook_url: https://hooks.slack.com/services/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
+        - webhook_url:
     - cache-push: {}
